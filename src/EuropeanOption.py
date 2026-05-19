@@ -38,12 +38,15 @@ class EuropeanOption:
     
     # Returns the Call or Put price depending on the option, 
     # e.g. put_call_parity(20) on a call option is saying that a put is priced at 20
-    def put_call_parity(self, opposite_price: float):
+    def put_call_parity(self, current_option_price: float):
         DISCOUNTED_K = self.K * math.exp(-self.r * self.T)
 
         if self.option_type == "call":
-            return opposite_price + self.S - DISCOUNTED_K
-        return opposite_price + DISCOUNTED_K - self.S
+            # Target is Put: p = c + Ke^(-rT) - S
+            return current_option_price + DISCOUNTED_K - self.S 
+        # Target is Call: c = p + S - Ke^(-rT)
+        return current_option_price + self.S - DISCOUNTED_K
+
     
         
         
