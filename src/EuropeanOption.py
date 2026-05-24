@@ -1,59 +1,48 @@
 import numpy as np
-import math
 
 class EuropeanOption:
-    
-    def __init__(self, S: float, K: float, T: float, r: float, sigma: float, option_type: str):
+
+    def __init__(self, S: float, K: float, T: float, r: float, sigma: float, q: float = 0.0, option_type: str = "call"):
         self.S = S
         self.K = K
         self.T = T
         self.r = r
         self.sigma = sigma
-        
+        self.q = q
         self.option_type = option_type.lower()
-        
+
         if self.option_type not in ['call', 'put']:
             raise ValueError("option_type must be either 'call' or 'put'")
-        
 
-    def intrinsic_value(self): 
-        if self.option_type == "call": 
+    def intrinsic_value(self):
+        if self.option_type == "call":
             return max(self.S - self.K, 0.0)
         return max(self.K - self.S, 0.0)
     
-        
-    def upper_bound(self): # no upper bound as guaranteed to be positive
+
+    def upper_bound(self):
         if self.option_type == "call":
-            return self.S
-        return self.K * math.exp(-self.r * self.T)
-    
+            return self.S * np.exp(-self.q * self.T)
+        return self.K * np.exp(-self.r * self.T)
+
 
     def lower_bound(self):
-        DISCOUNTED_K = self.K * math.exp(-self.r * self.T)
+        discounted_K = self.K * np.exp(-self.r * self.T)
+        discounted_S = self.S * np.exp(-self.q * self.T)
 
         if self.option_type == "call":
-            return max(self.S - DISCOUNTED_K, 0.0)
-        return max(DISCOUNTED_K - self.S, 0.0)
-    
-    
-    # Returns the Call or Put price depending on the option, 
-    # e.g. put_call_parity(20) on a call option is saying that a put is priced at 20
-    def put_call_parity(self, current_option_price: float):
-        DISCOUNTED_K = self.K * math.exp(-self.r * self.T)
+            return max(discounted_S - discounted_K, 0.0)
+        return max(discounted_K - discounted_S, 0.0)
+
+
+    # Returns the call or put price implied by put-call parity given the price.
+    # E.g. parity_counterpart_price(20) on a call option returns the put price if the call trades at 20.
+    def parity_counterpart_price(self, current_option_price: float):
+        discounted_K = self.K * np.exp(-self.r * self.T)
+        discounted_S = self.S * np.exp(-self.q * self.T)
 
         if self.option_type == "call":
-            # Target is Put: p = c + Ke^(-rT) - S
-            return current_option_price + DISCOUNTED_K - self.S 
-        # Target is Call: c = p + S - Ke^(-rT)
-        return current_option_price + self.S - DISCOUNTED_K
-
-    
-        
-        
-
-
-
-    
-
-
-        
+            # P = C + K*exp(-rT) - S*exp(-qT)
+            return current_option_price + discounted_K - discounted_S
+        # C = P + S*exp(-qT) - K*exp(-rT)
+        return current_option_price + discounted_S - discounted_K
