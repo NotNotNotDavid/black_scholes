@@ -48,12 +48,14 @@ no-arbitrage bounds.
 
 ## Repository layout
 
-src/
-├── european_option.py    # Option contract: bounds, parity, intrinsic value
-└── pricer.py             # Black-Scholes, vega, implied volatility solver
-tests/
-├── test_european_option.py   
-└──  test_pricer.py
+```text
+.
+├── src/
+│   ├── EuropeanOption.py    # Option contract: bounds, parity, intrinsic value
+│   └── Pricer.py            # Black-Scholes, vega, implied volatility solver
+└── tests/
+    ├── test_european_option.py
+    └── test_pricer.py
 conftest.py            # pytest path configuration
 
 ## Running the code
