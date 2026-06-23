@@ -62,28 +62,41 @@ class Pricer:
         # throws exception when given a price that is impossible to calculate
         if price > option.upper_bound() or price < option.lower_bound():
             raise IVSolverError("The price given is out of the range possible")
-
+        
         # specs
         current_sigma = 0.2
         tolerance = 1e-8
-    
 
+        # Essentially the error, the objective for Brent's
+        def objective(sigma):
+            return Pricer._bs_price_at_sigma(sigma, option) - price
+
+    
         # Newton's (numerical) method 
         for _ in range(100):
-
-            
-            calculated_price = Pricer._bs_price_at_sigma(current_sigma, option)
-            error = calculated_price - price
+            error = objective(current_sigma)
 
             if abs(error) <= tolerance:
                 return current_sigma
             
+            v = Pricer._vega_at_sigma(current_sigma, option)
+            if abs(v) < 1e-10:
+                break  # vega vanished, try Brent
+    
+            current_sigma = current_sigma - error / v
+    
+            if current_sigma <= 0 or current_sigma > 5.0:
+                break  # sigma left range, try Brent
+
             # Calculate vega for the numerical method
-
             current_sigma = current_sigma - error / Pricer._vega_at_sigma(current_sigma, option)
-        
 
-     
+        try:
+            return brentq(objective, 1e-6, 5.0) # arbitrary numbers, lower and upper bound will never happen
+        
+        except ValueError:
+            raise IVSolverError("Both Newton and Brent failed")
+        
 
     @staticmethod
     def _bs_price_at_sigma(sigma, option):
