@@ -2,7 +2,7 @@
 import math
 import pytest
 from EuropeanOption import EuropeanOption
-from Pricer import Pricer
+from Pricer import Pricer, IVSolverError
 
 # to run tests: pytest tests/test_pricer.py in terminal
 
@@ -108,3 +108,110 @@ def test_parity_violation_not_flagged_for_correct_prices():
     c = Pricer.black_scholes_price(call)
     p = Pricer.black_scholes_price(put)
     assert Pricer.parity_violation(c, p, call) == False
+
+# --- IV Calculator tests (pytest tests/test_pricer.py -v -k "iv")---
+
+def test_iv_atm():
+    true_sigma = 0.2
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma= true_sigma, option_type="call", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_no_alter_original():
+    true_sigma = 0.2
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma= true_sigma, option_type="call", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == option.sigma
+
+
+def test_iv_otm_call():
+    true_sigma = 0.2
+    option = EuropeanOption(S=100, K=105, T=0.5, r=0.05, sigma= true_sigma, option_type="call", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+
+def test_iv_otm_put():
+    true_sigma = 0.2
+    option = EuropeanOption(S=105, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="put", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_itm_call():
+    true_sigma = 0.2
+    option = EuropeanOption(S=116, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="call", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_itm_put():
+    true_sigma = 0.2
+    option = EuropeanOption(S=90, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="put", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_atm_dividends():
+    true_sigma = 0.2
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="call", q=0.02)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_atm_dividends_high_sigma():
+    true_sigma = 0.92
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="call", q=0.02)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_atm_high_sigma():
+    true_sigma = 0.83
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="call", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_atm_low_sigma():
+    true_sigma = 0.01
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="call", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_out_of_bounds():
+    true_sigma = 0.2
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="call", q=0.00)
+    bs_price_wrong = Pricer.black_scholes_price(option) + 1000
+    with pytest.raises(IVSolverError): 
+        Pricer.implied_volatility(bs_price_wrong, option)
+
+def test_iv_rejects_negative_price():
+    option = EuropeanOption(S=100, K=100, T=0.5, r=0.05, sigma=0.20, option_type="call", q=0.00)
+    with pytest.raises(IVSolverError):
+        Pricer.implied_volatility(-1.0, option)
+
+def test_iv_deep_itm_call():
+    true_sigma = 0.2
+    option = EuropeanOption(S=140, K=100, T=0.5, r=0.05, sigma=true_sigma, option_type="call", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_deep_itm_put():
+    true_sigma = 0.2
+    option = EuropeanOption(S=100, K=50, T=0.5, r=0.05, sigma=true_sigma, option_type="put", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
+
+def test_iv_deep_itm_extreme():
+    true_sigma = 0.88
+    option = EuropeanOption(S=100, K=35, T=0.5, r=0.05, sigma=true_sigma, option_type="put", q=0.00)
+    bs_price = Pricer.black_scholes_price(option)
+    calculated_sigma = Pricer.implied_volatility(bs_price, option)
+    assert true_sigma == pytest.approx(calculated_sigma, abs = 1e-5)
