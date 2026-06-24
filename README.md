@@ -15,12 +15,11 @@ has been built and what is planned (and also might change!).
 | Put-call parity & no-arbitrage bounds | Complete       |
 | Implied volatility solver (Newton-Raphson + Brent fallback) | Complete |
 | Greeks (Delta, Gamma, Vega, Theta, Rho, second-order) | In progress |
-| Binomial tree (Cox-Ross-Rubinstein)  | Planned         |
 | Implied volatility surface construction | Planned     |
 | Variance risk premium empirical study | Planned        |
 | PCA of IV surface dynamics           | Planned         |
 
-Last updated: May 24th 2026
+Last updated: Jun 23th 2026
 
 ## Research Direction
 
@@ -91,6 +90,12 @@ limitation of the inversion problem, not the solver.
 log-normal returns, and no jumps. The volatility observed in real
 SPX data is direct evidence of model misspecification. This project
 uses BS as a baseline. 
+
+## Limitations
+
+**American/European Optioins.** This project will mainly focus on European options.
+As extensions to American options via binomial trees can be considered in the future.
+
 
 ## References
 
