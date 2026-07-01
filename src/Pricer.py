@@ -88,8 +88,6 @@ class Pricer:
             if current_sigma <= 0 or current_sigma > 5.0:
                 break  # sigma left range, try Brent
 
-            # Calculate vega for the numerical method
-            current_sigma = current_sigma - error / Pricer._vega_at_sigma(current_sigma, option)
 
         try:
             return brentq(objective, 1e-6, 5.0) # arbitrary numbers, lower and upper bound will never happen
