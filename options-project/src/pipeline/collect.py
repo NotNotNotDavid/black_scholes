@@ -3,6 +3,10 @@ import pandas as pd
 from datetime import datetime, timezone
 from pathlib import Path
 
+# collect.py lives at: options-project/src/pipeline/collect.py
+# parents[0] = pipeline, parents[1] = src, parents[2] = options-project
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+RAW_DIR = PROJECT_ROOT / "data" / "raw"
 
 def collect_one_expiry(tk, expiry, snapshot_ts, S, r):
 
@@ -56,7 +60,8 @@ def main():
 
     dayfile = pd.concat(frame, ignore_index=True)
 
-    filepath = f"data/raw/spx_{snapshot_ts.date()}.parquet"
+    RAW_DIR.mkdir(parents=True, exist_ok=True)   # creates data/raw/ if missing
+    filepath = RAW_DIR / f"spx_{snapshot_ts.date()}.parquet"
     dayfile.to_parquet(filepath, index=False)
 
     print(f"Saved snapshot to {filepath}")
